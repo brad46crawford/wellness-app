@@ -289,36 +289,26 @@ export function AppStoreProvider({ children }) {
     );
   }
 
-  // Reposts a post to the top of the Explore feed under the current
-  // user's own presence, crediting the original anonymous poster.
-  function echoExploreGoal(postId) {
-    const original = exploreGoals.find((post) => post.id === postId);
-    if (!original) return;
-
-    setExploreGoals((prev) => {
-      const bumped = prev.map((post) =>
-        post.id === postId ? { ...post, echoCount: post.echoCount + 1 } : post
-      );
-      const echoPost = {
-        id: `ex_echo_${Date.now()}`,
-        anonName: currentUser.name,
-        title: original.title,
-        category: original.category,
-        likeCount: 0,
-        saveCount: 0,
-        echoCount: 0,
-        likedByMe: false,
-        savedByMe: false,
-        isEcho: true,
-        echoedFromName: original.anonName,
-        comments: [],
-      };
-      return [echoPost, ...bumped];
-    });
-  }
-
   function getSavedExploreGoals() {
     return exploreGoals.filter((post) => post.savedByMe);
+  }
+
+  // Turns a saved Explore post into a real tracked goal, reusing the
+  // same creation functions as the Goals screen (same default of 7/week,
+  // no separate "confirm name" step for v1 — the post's title is used
+  // as-is). Pass destination "personal" for Personal Goals, or a group
+  // id to add it there. Removes the post from Saved for Later afterward
+  // (see saveExploreGoal) so it doesn't linger with a stale "Add" button.
+  function addExploreGoalToTracked(postId, destination) {
+    const post = exploreGoals.find((p) => p.id === postId);
+    if (!post) return;
+
+    if (destination === "personal") {
+      addPersonalGoal(post.title, 7);
+    } else {
+      addGoalToGroup(destination, post.title, 7);
+    }
+    saveExploreGoal(postId);
   }
 
   // Builds today's outstanding task list across every group goal and
@@ -380,8 +370,8 @@ export function AppStoreProvider({ children }) {
     likeExploreGoal,
     saveExploreGoal,
     addExploreComment,
-    echoExploreGoal,
     getSavedExploreGoals,
+    addExploreGoalToTracked,
   };
 
   return (

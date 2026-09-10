@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radius } from "../theme/theme";
 
-export default function ExploreCard({ post, onLike, onSave, onEcho, onComment }) {
+export default function ExploreCard({ post, onLike, onSave, onComment, onAdd }) {
   const [expanded, setExpanded] = useState(false);
   const [draft, setDraft] = useState("");
 
@@ -15,13 +15,6 @@ export default function ExploreCard({ post, onLike, onSave, onEcho, onComment })
 
   return (
     <View style={styles.card}>
-      {post.isEcho && (
-        <View style={styles.echoRow}>
-          <Ionicons name="repeat" size={13} color={colors.steel} />
-          <Text style={styles.echoText}>You echoed {post.echoedFromName}</Text>
-        </View>
-      )}
-
       <View style={styles.headerRow}>
         <Text style={styles.anonName}>{post.anonName}</Text>
         {post.category && (
@@ -56,12 +49,14 @@ export default function ExploreCard({ post, onLike, onSave, onEcho, onComment })
           />
           <Text style={styles.actionCount}>{post.saveCount}</Text>
         </Pressable>
-
-        <Pressable style={styles.actionBtn} onPress={onEcho}>
-          <Ionicons name="repeat-outline" size={20} color={colors.steel} />
-          <Text style={styles.actionCount}>{post.echoCount}</Text>
-        </Pressable>
       </View>
+
+      {onAdd && (
+        <Pressable style={styles.addBtn} onPress={onAdd}>
+          <Ionicons name="add-circle-outline" size={16} color={colors.primaryLight} />
+          <Text style={styles.addBtnText}>Add to my goals</Text>
+        </Pressable>
+      )}
 
       {expanded && (
         <View style={styles.commentsArea}>
@@ -101,13 +96,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  echoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
-  echoText: { color: colors.steel, fontSize: 11, fontWeight: "600" },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -132,6 +120,18 @@ const styles = StyleSheet.create({
   },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: spacing.xs },
   actionCount: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  addBtnText: { color: colors.primaryLight, fontWeight: "600", fontSize: 13 },
   commentsArea: {
     marginTop: spacing.sm,
     paddingTop: spacing.sm,

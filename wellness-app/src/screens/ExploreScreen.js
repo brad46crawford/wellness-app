@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
+import { View, Text, FlatList, Pressable, Modal, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppStore } from "../data/AppStore";
 import ExploreCard from "../components/ExploreCard";
@@ -11,12 +11,20 @@ export default function ExploreScreen() {
     getSavedExploreGoals,
     likeExploreGoal,
     saveExploreGoal,
-    echoExploreGoal,
     addExploreComment,
+    addExploreGoalToTracked,
+    groups,
   } = useAppStore();
   const [tab, setTab] = useState("discover"); // "discover" | "saved"
+  const [addPickerPost, setAddPickerPost] = useState(null);
 
   const posts = tab === "discover" ? exploreGoals : getSavedExploreGoals();
+
+  function handleChooseDestination(destination) {
+    if (!addPickerPost) return;
+    addExploreGoalToTracked(addPickerPost.id, destination);
+    setAddPickerPost(null);
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -50,8 +58,8 @@ export default function ExploreScreen() {
             post={item}
             onLike={() => likeExploreGoal(item.id)}
             onSave={() => saveExploreGoal(item.id)}
-            onEcho={() => echoExploreGoal(item.id)}
             onComment={(text) => addExploreComment(item.id, text)}
+            onAdd={tab === "saved" ? () => setAddPickerPost(item) : undefined}
           />
         )}
         ListEmptyComponent={
@@ -62,6 +70,43 @@ export default function ExploreScreen() {
           </Text>
         }
       />
+
+      <Modal
+        visible={addPickerPost !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAddPickerPost(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Add to...</Text>
+            <Text style={styles.modalSubtitle} numberOfLines={2}>
+              "{addPickerPost?.title}"
+            </Text>
+
+            <Pressable
+              style={styles.destinationRow}
+              onPress={() => handleChooseDestination("personal")}
+            >
+              <Text style={styles.destinationText}>Personal Goals</Text>
+            </Pressable>
+
+            {groups.map((group) => (
+              <Pressable
+                key={group.id}
+                style={styles.destinationRow}
+                onPress={() => handleChooseDestination(group.id)}
+              >
+                <Text style={styles.destinationText}>{group.name}</Text>
+              </Pressable>
+            ))}
+
+            <Pressable style={styles.cancelBtn} onPress={() => setAddPickerPost(null)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -96,4 +141,41 @@ const styles = StyleSheet.create({
   tabTextActive: { color: colors.onPrimary },
   listContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
   emptyText: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
+  },
+  modalCard: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  modalTitle: {
+    color: colors.text,
+    fontFamily: fonts.heading,
+    fontSize: 22,
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  modalSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    marginBottom: spacing.md,
+  },
+  destinationRow: {
+    backgroundColor: colors.surfaceLight,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  destinationText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+  cancelBtn: {
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+    marginTop: spacing.xs,
+  },
+  cancelBtnText: { color: colors.textMuted, fontWeight: "600" },
 });
