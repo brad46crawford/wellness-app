@@ -1,19 +1,24 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Animated, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors, fonts } from "../theme/theme";
 
 // Bare, static (no animation) — this is what expo-splash-screen shows
 // natively the instant the app launches, before any JS has run. It just
 // matches the app background so there's no flash/mismatch when this
 // component takes over.
-const FADE_IN_MS = 550;
-const HOLD_MS = 500;
+const FADE_IN_MS = 550; // unchanged — the original fade/scale-in
+const PLAIN_HOLD_MS = 550; // sit still before the shine sweep starts
+const SHINE_MS = 450; // the light streak sweeping across the text
 const FADE_OUT_MS = 300;
-// Total: ~1.35s, comfortably under the 2s budget.
+// Total: ~1.85s (~37% longer than the previous 1.35s version), with the
+// shine as the final beat right before the fade-out.
 
 export default function AnimatedSplash({ appName, onFinish }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.85)).current;
+  const shine = useRef(new Animated.Value(0)).current;
+  const [textSize, setTextSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     Animated.sequence([
@@ -29,7 +34,12 @@ export default function AnimatedSplash({ appName, onFinish }) {
           useNativeDriver: true,
         }),
       ]),
-      Animated.delay(HOLD_MS),
+      Animated.delay(PLAIN_HOLD_MS),
+      Animated.timing(shine, {
+        toValue: 1,
+        duration: SHINE_MS,
+        useNativeDriver: true,
+      }),
       Animated.timing(opacity, {
         toValue: 0,
         duration: FADE_OUT_MS,
@@ -42,13 +52,50 @@ export default function AnimatedSplash({ appName, onFinish }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const barWidth = Math.max(textSize.width * 0.45, 40);
+  const shineTranslateX = shine.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-barWidth, textSize.width + barWidth],
+  });
+
   return (
     <View style={styles.container}>
-      <Animated.Text
-        style={[styles.title, { opacity, transform: [{ scale }] }]}
-      >
-        {appName}
-      </Animated.Text>
+      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+        <View
+          style={styles.textWrap}
+          onLayout={(e) => {
+            const { width, height } = e.nativeEvent.layout;
+            setTextSize({ width, height });
+          }}
+        >
+          <Text style={styles.title}>{appName}</Text>
+
+          {/* The streak: clipped to the text's own bounding box so it
+              reads as light passing over the word, not a bar over the
+              background. The word itself never moves. */}
+          {textSize.width > 0 && (
+            <View pointerEvents="none" style={styles.clip}>
+              <Animated.View
+                style={[
+                  styles.shineBar,
+                  {
+                    width: barWidth,
+                    height: textSize.height,
+                    transform: [{ translateX: shineTranslateX }],
+                  },
+                ]}
+              >
+                <LinearGradient
+                  colors={["transparent", "rgba(255,255,255,0.9)", "transparent"]}
+                  start={{ x: 0, y: 0.5 }}
+                  end={{ x: 1, y: 0.5 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
+            </View>
+          )}
+        </View>
+      </Animated.View>
     </View>
   );
 }
@@ -65,5 +112,17 @@ const styles = StyleSheet.create({
     fontSize: 56,
     color: colors.primary,
     letterSpacing: 3,
+  },
+  textWrap: {
+    position: "relative",
+  },
+  clip: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  shineBar: {
+    position: "absolute",
+    top: 0,
+    left: 0,
   },
 });
