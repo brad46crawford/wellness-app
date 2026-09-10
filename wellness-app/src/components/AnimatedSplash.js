@@ -10,9 +10,9 @@ import { colors, fonts } from "../theme/theme";
 const FADE_IN_MS = 550; // unchanged — the original fade/scale-in
 const PLAIN_HOLD_MS = 550; // sit still before the shine sweep starts
 const SHINE_MS = 450; // the light streak sweeping across the text
-const FADE_OUT_MS = 300;
-// Total: ~1.85s (~37% longer than the previous 1.35s version), with the
-// shine as the final beat right before the fade-out.
+// Intro itself runs ~1.55s, then App.js cross-fades this out while the
+// app fades in underneath it (see CROSSFADE_MS there) — no separate
+// fade-out happens here, so the two don't stack into two fades in a row.
 
 export default function AnimatedSplash({ appName, onFinish }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -38,11 +38,6 @@ export default function AnimatedSplash({ appName, onFinish }) {
       Animated.timing(shine, {
         toValue: 1,
         duration: SHINE_MS,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: FADE_OUT_MS,
         useNativeDriver: true,
       }),
     ]).start(({ finished }) => {
