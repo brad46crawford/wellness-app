@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Wellness Circle",
+    "slug": "wellness-circle",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wellnesscircle.app"
+    },
+    "android": {
+      "package": "com.wellnesscircle.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
