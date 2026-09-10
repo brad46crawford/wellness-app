@@ -1,22 +1,34 @@
 import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import HomeScreen from "../screens/HomeScreen";
-import ChatScreen from "../screens/ChatScreen";
+import ChatListScreen from "../screens/ChatListScreen";
+import ChatThreadScreen from "../screens/ChatThreadScreen";
 import GoalsScreen from "../screens/GoalsScreen";
-import PersonalScreen from "../screens/PersonalScreen";
 import { colors } from "../theme/theme";
 
 const Tab = createBottomTabNavigator();
+const ChatStack = createNativeStackNavigator();
 
 const ICONS = {
   Home: "home",
   Chat: "chatbubbles",
   Goals: "flag",
-  Personal: "person-circle",
 };
+
+const tabBarStyle = { backgroundColor: colors.surface, borderTopColor: colors.border };
+
+function ChatStackScreen() {
+  return (
+    <ChatStack.Navigator screenOptions={{ headerShown: false }}>
+      <ChatStack.Screen name="ChatList" component={ChatListScreen} />
+      <ChatStack.Screen name="ChatThread" component={ChatThreadScreen} />
+    </ChatStack.Navigator>
+  );
+}
 
 export default function RootNavigation() {
   return (
@@ -36,18 +48,26 @@ export default function RootNavigation() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: colors.primary,
+          tabBarActiveTintColor: colors.primaryLight,
           tabBarInactiveTintColor: colors.textMuted,
-          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+          tabBarStyle,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name={ICONS[route.name]} size={size} color={color} />
           ),
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Chat" component={ChatScreen} />
+        <Tab.Screen
+          name="Chat"
+          component={ChatStackScreen}
+          options={({ route }) => {
+            const focusedRoute = getFocusedRouteNameFromRoute(route) ?? "ChatList";
+            return {
+              tabBarStyle: focusedRoute === "ChatThread" ? { display: "none" } : tabBarStyle,
+            };
+          }}
+        />
         <Tab.Screen name="Goals" component={GoalsScreen} />
-        <Tab.Screen name="Personal" component={PersonalScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

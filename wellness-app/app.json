@@ -6,9 +6,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#0F172A"
+      "backgroundColor": "#121214"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.wellnesscircle.app"
@@ -18,6 +20,18 @@
     },
     "web": {
       "bundler": "metro"
-    }
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Wellness Circle uses your photos to let you share proof of completing a goal with your group.",
+          "cameraPermission": "Wellness Circle uses your camera to let you snap a photo when you complete a goal."
+        }
+      ],
+      "expo-font",
+      "expo-splash-screen"
+    ]
   }
 }

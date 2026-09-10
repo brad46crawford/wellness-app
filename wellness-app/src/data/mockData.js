@@ -119,22 +119,3 @@ export const initialChatMessages = {
     },
   ],
 };
-
-export const initialFeed = [
-  {
-    id: "f1",
-    userName: "Priya",
-    groupName: "Morning Movers",
-    text: "Hit 7/7 on morning walks this week! 🎉",
-    kind: "milestone",
-    date: "2026-08-29",
-  },
-  {
-    id: "f2",
-    userName: "Sam",
-    groupName: "Hydration Nation",
-    text: "Checked in: Drink 8 glasses of water",
-    kind: "checkin",
-    date: "2026-08-29",
-  },
-];

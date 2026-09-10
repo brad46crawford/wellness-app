@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState } from "react";
 import {
   initialGroups,
   initialCheckIns,
-  initialFeed,
   initialPersonalGoals,
   initialPersonalCheckIns,
   initialChatMessages,
@@ -13,15 +12,49 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// The single canonical "this week" boundary (Monday 00:00 through the
+// following Sunday). progressThisWeek and the leaderboard both mean the
+// same week — this is that definition, so nothing else should compute
+// its own.
+function getWeekStart(date = new Date()) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0 = Sunday ... 6 = Saturday
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - diffToMonday);
+  return d;
+}
+
+function isThisWeek(dateString) {
+  return new Date(dateString) >= getWeekStart();
+}
+
 const AppStoreContext = createContext(null);
 
 export function AppStoreProvider({ children }) {
   const [groups, setGroups] = useState(initialGroups);
   const [checkIns, setCheckIns] = useState(initialCheckIns);
-  const [feed, setFeed] = useState(initialFeed);
   const [personalGoals, setPersonalGoals] = useState(initialPersonalGoals);
   const [personalCheckIns, setPersonalCheckIns] = useState(initialPersonalCheckIns);
   const [chatMessages, setChatMessages] = useState(initialChatMessages);
+  // Tracks how many messages in each group the user has actually seen,
+  // so the chat list can show an unread badge for the rest.
+  const [readCounts, setReadCounts] = useState({});
+
+  // Appends a message to a group's thread and marks it read for the
+  // sender (everything here is authored by the current user for now).
+  function pushMessage(groupId, message) {
+    const newMessage = {
+      id: `m_${Date.now()}_${Math.round(Math.random() * 1000)}`,
+      time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+      ...message,
+    };
+    setChatMessages((prev) => {
+      const updated = { ...prev, [groupId]: [...(prev[groupId] || []), newMessage] };
+      setReadCounts((prevRead) => ({ ...prevRead, [groupId]: updated[groupId].length }));
+      return updated;
+    });
+  }
 
   function addGoalToGroup(groupId, title, targetPerWeek) {
     setGroups((prev) =>
@@ -81,21 +114,29 @@ export function AppStoreProvider({ children }) {
       );
     }
 
-    // post to the shared feed so the group sees accountability in action
-    setFeed((prev) => [
-      {
-        id: `f_${Date.now()}`,
-        userName: currentUser.name,
-        groupName,
-        text:
-          status === "done"
-            ? `Checked in: ${goalTitle}`
-            : `Missed today's goal: ${goalTitle} (no shame, tomorrow's a reset)`,
-        kind: status === "done" ? "checkin" : "miss",
-        date: new Date().toISOString().slice(0, 10),
-      },
-      ...prev,
-    ]);
+    // Post the check-in into the group's chat thread so accountability
+    // shows up where the group is already spending time.
+    pushMessage(groupId, {
+      type: "system",
+      status,
+      userName: currentUser.name,
+      text:
+        status === "done"
+          ? `${currentUser.name} checked in: ${goalTitle} ✅`
+          : `${currentUser.name} missed today's goal: ${goalTitle} (no shame, tomorrow's a reset)`,
+    });
+  }
+
+  // Posts the proof-of-completion photo a user takes right after
+  // checking off a group goal.
+  function sendGoalPhoto(groupId, imageUri, goalTitle) {
+    pushMessage(groupId, {
+      type: "photo",
+      userId: currentUser.id,
+      userName: currentUser.name,
+      imageUri,
+      caption: goalTitle ? `Proof: ${goalTitle}` : null,
+    });
   }
 
   function addPersonalGoal(title, targetPerWeek) {
@@ -138,17 +179,58 @@ export function AppStoreProvider({ children }) {
   }
 
   function sendMessage(groupId, text) {
-    const newMessage = {
-      id: `m_${Date.now()}`,
+    pushMessage(groupId, {
+      type: "text",
       userId: currentUser.id,
       userName: currentUser.name,
       text,
-      time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-    };
-    setChatMessages((prev) => ({
+    });
+  }
+
+  // Call when a thread is opened so its unread badge clears.
+  function markGroupRead(groupId) {
+    setReadCounts((prev) => ({
       ...prev,
-      [groupId]: [...(prev[groupId] || []), newMessage],
+      [groupId]: (chatMessages[groupId] || []).length,
     }));
+  }
+
+  // Ranks a group's members by completed check-ins this week. Members
+  // with zero misses this week rank above anyone with at least one miss;
+  // within each of those tiers, higher completed count ranks higher. A
+  // miss only pushes someone down a tier — it never drops them off the list.
+  function getLeaderboard(groupId) {
+    const group = groups.find((g) => g.id === groupId);
+    if (!group) return [];
+
+    const goalIds = group.goals.map((g) => g.id);
+
+    const standings = group.members.map((member) => {
+      const memberCheckIns = checkIns.filter(
+        (c) =>
+          c.userId === member.id &&
+          goalIds.includes(c.goalId) &&
+          isThisWeek(c.date)
+      );
+      const completed = memberCheckIns.filter((c) => c.status === "done").length;
+      const missed = memberCheckIns.filter((c) => c.status === "missed").length;
+      return {
+        userId: member.id,
+        name: member.name,
+        completed,
+        missed,
+        // A simple "hot streak" read on the week so far: several clean
+        // check-ins and nothing missed yet.
+        isOnStreak: missed === 0 && completed >= 3,
+      };
+    });
+
+    return standings.sort((a, b) => {
+      const aPerfect = a.missed === 0;
+      const bPerfect = b.missed === 0;
+      if (aPerfect !== bPerfect) return aPerfect ? -1 : 1;
+      return b.completed - a.completed;
+    });
   }
 
   // Builds today's outstanding task list across every group goal and
@@ -193,16 +275,19 @@ export function AppStoreProvider({ children }) {
     currentUser,
     groups,
     checkIns,
-    feed,
     personalGoals,
     personalCheckIns,
     chatMessages,
+    readCounts,
     addGoalToGroup,
     submitCheckIn,
     addPersonalGoal,
     submitPersonalCheckIn,
     sendMessage,
+    sendGoalPhoto,
+    markGroupRead,
     getTodaysTasks,
+    getLeaderboard,
   };
 
   return (
