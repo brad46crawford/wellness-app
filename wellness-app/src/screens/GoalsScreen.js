@@ -18,21 +18,34 @@ export default function GoalsScreen() {
   const { groups, addGoalToGroup, personalGoals, addPersonalGoal } = useAppStore();
   const [groupModalId, setGroupModalId] = useState(null);
   const [newGroupGoalTitle, setNewGroupGoalTitle] = useState("");
+  const [groupGoalShared, setGroupGoalShared] = useState(false);
   const [personalModalOpen, setPersonalModalOpen] = useState(false);
   const [newPersonalGoalTitle, setNewPersonalGoalTitle] = useState("");
+  const [personalGoalShared, setPersonalGoalShared] = useState(false);
   const [remindersOn, setRemindersOn] = useState(true);
+
+  function closeGroupModal() {
+    setGroupModalId(null);
+    setNewGroupGoalTitle("");
+    setGroupGoalShared(false);
+  }
 
   function saveGroupGoal() {
     if (newGroupGoalTitle.trim().length === 0) return;
-    addGoalToGroup(groupModalId, newGroupGoalTitle.trim(), 7);
-    setGroupModalId(null);
+    addGoalToGroup(groupModalId, newGroupGoalTitle.trim(), 7, groupGoalShared);
+    closeGroupModal();
+  }
+
+  function closePersonalModal() {
+    setPersonalModalOpen(false);
+    setNewPersonalGoalTitle("");
+    setPersonalGoalShared(false);
   }
 
   function savePersonalGoal() {
     if (newPersonalGoalTitle.trim().length === 0) return;
-    addPersonalGoal(newPersonalGoalTitle.trim(), 7);
-    setNewPersonalGoalTitle("");
-    setPersonalModalOpen(false);
+    addPersonalGoal(newPersonalGoalTitle.trim(), 7, personalGoalShared);
+    closePersonalModal();
   }
 
   return (
@@ -86,7 +99,7 @@ export default function GoalsScreen() {
         visible={groupModalId !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setGroupModalId(null)}
+        onRequestClose={closeGroupModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -99,10 +112,21 @@ export default function GoalsScreen() {
               onChangeText={setNewGroupGoalTitle}
               autoFocus
             />
+            <View style={styles.shareRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.shareLabel}>Share to Explore</Text>
+                <Text style={styles.shareHint}>Others can see this goal anonymously</Text>
+              </View>
+              <Switch
+                value={groupGoalShared}
+                onValueChange={setGroupGoalShared}
+                trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+              />
+            </View>
             <View style={styles.modalButtons}>
               <Pressable
                 style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setGroupModalId(null)}
+                onPress={closeGroupModal}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </Pressable>
@@ -121,7 +145,7 @@ export default function GoalsScreen() {
         visible={personalModalOpen}
         transparent
         animationType="slide"
-        onRequestClose={() => setPersonalModalOpen(false)}
+        onRequestClose={closePersonalModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -134,10 +158,21 @@ export default function GoalsScreen() {
               onChangeText={setNewPersonalGoalTitle}
               autoFocus
             />
+            <View style={styles.shareRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.shareLabel}>Share to Explore</Text>
+                <Text style={styles.shareHint}>Others can see this goal anonymously</Text>
+              </View>
+              <Switch
+                value={personalGoalShared}
+                onValueChange={setPersonalGoalShared}
+                trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+              />
+            </View>
             <View style={styles.modalButtons}>
               <Pressable
                 style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setPersonalModalOpen(false)}
+                onPress={closePersonalModal}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </Pressable>
@@ -228,6 +263,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     fontSize: 15,
   },
+  shareRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  shareLabel: { color: colors.text, fontSize: 14, fontWeight: "600" },
+  shareHint: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
   modalButtons: {
     flexDirection: "row",
     marginTop: spacing.lg,

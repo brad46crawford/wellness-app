@@ -8,6 +8,7 @@ import HomeScreen from "../screens/HomeScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import ChatThreadScreen from "../screens/ChatThreadScreen";
 import GoalsScreen from "../screens/GoalsScreen";
+import ExploreScreen from "../screens/ExploreScreen";
 import { colors } from "../theme/theme";
 
 const Tab = createBottomTabNavigator();
@@ -17,6 +18,7 @@ const ICONS = {
   Home: "home",
   Chat: "chatbubbles",
   Goals: "flag",
+  Explore: "compass",
 };
 
 const tabBarStyle = { backgroundColor: colors.surface, borderTopColor: colors.border };
@@ -68,6 +70,7 @@ export default function RootNavigation() {
           }}
         />
         <Tab.Screen name="Goals" component={GoalsScreen} />
+        <Tab.Screen name="Explore" component={ExploreScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

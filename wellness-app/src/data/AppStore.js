@@ -5,6 +5,7 @@ import {
   initialPersonalGoals,
   initialPersonalCheckIns,
   initialChatMessages,
+  initialExploreGoals,
   currentUser,
 } from "./mockData";
 
@@ -40,6 +41,9 @@ export function AppStoreProvider({ children }) {
   // Tracks how many messages in each group the user has actually seen,
   // so the chat list can show an unread badge for the rest.
   const [readCounts, setReadCounts] = useState({});
+  // The public Explore feed — mock "other user" posts for now. Local/
+  // mock only: nothing here syncs across devices yet.
+  const [exploreGoals, setExploreGoals] = useState(initialExploreGoals);
 
   // Appends a message to a group's thread and marks it read for the
   // sender (everything here is authored by the current user for now).
@@ -56,7 +60,7 @@ export function AppStoreProvider({ children }) {
     });
   }
 
-  function addGoalToGroup(groupId, title, targetPerWeek) {
+  function addGoalToGroup(groupId, title, targetPerWeek, sharedToExplore = false) {
     setGroups((prev) =>
       prev.map((g) =>
         g.id === groupId
@@ -70,6 +74,7 @@ export function AppStoreProvider({ children }) {
                   cadence: "daily",
                   targetPerWeek,
                   progressThisWeek: 0,
+                  sharedToExplore,
                 },
               ],
             }
@@ -139,7 +144,7 @@ export function AppStoreProvider({ children }) {
     });
   }
 
-  function addPersonalGoal(title, targetPerWeek) {
+  function addPersonalGoal(title, targetPerWeek, sharedToExplore = false) {
     setPersonalGoals((prev) => [
       ...prev,
       {
@@ -147,6 +152,7 @@ export function AppStoreProvider({ children }) {
         title,
         targetPerWeek,
         progressThisWeek: 0,
+        sharedToExplore,
       },
     ]);
   }
@@ -233,6 +239,88 @@ export function AppStoreProvider({ children }) {
     });
   }
 
+  // --- Explore feed ---
+  // Mock/local only for now: no cross-device sync, no comment
+  // moderation, and "save" is just a bookmark — it does not create a
+  // real tracked goal. All Phase 2, once there's a real backend.
+
+  function likeExploreGoal(postId) {
+    setExploreGoals((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              likedByMe: !post.likedByMe,
+              likeCount: post.likeCount + (post.likedByMe ? -1 : 1),
+            }
+          : post
+      )
+    );
+  }
+
+  function saveExploreGoal(postId) {
+    setExploreGoals((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              savedByMe: !post.savedByMe,
+              saveCount: post.saveCount + (post.savedByMe ? -1 : 1),
+            }
+          : post
+      )
+    );
+  }
+
+  function addExploreComment(postId, text) {
+    const trimmed = text.trim();
+    if (trimmed.length === 0) return;
+    const newComment = {
+      id: `exc_${Date.now()}`,
+      authorName: currentUser.name,
+      text: trimmed,
+    };
+    setExploreGoals((prev) =>
+      prev.map((post) =>
+        post.id === postId
+          ? { ...post, comments: [...post.comments, newComment] }
+          : post
+      )
+    );
+  }
+
+  // Reposts a post to the top of the Explore feed under the current
+  // user's own presence, crediting the original anonymous poster.
+  function echoExploreGoal(postId) {
+    const original = exploreGoals.find((post) => post.id === postId);
+    if (!original) return;
+
+    setExploreGoals((prev) => {
+      const bumped = prev.map((post) =>
+        post.id === postId ? { ...post, echoCount: post.echoCount + 1 } : post
+      );
+      const echoPost = {
+        id: `ex_echo_${Date.now()}`,
+        anonName: currentUser.name,
+        title: original.title,
+        category: original.category,
+        likeCount: 0,
+        saveCount: 0,
+        echoCount: 0,
+        likedByMe: false,
+        savedByMe: false,
+        isEcho: true,
+        echoedFromName: original.anonName,
+        comments: [],
+      };
+      return [echoPost, ...bumped];
+    });
+  }
+
+  function getSavedExploreGoals() {
+    return exploreGoals.filter((post) => post.savedByMe);
+  }
+
   // Builds today's outstanding task list across every group goal and
   // personal goal the user hasn't already checked into today.
   function getTodaysTasks() {
@@ -279,6 +367,7 @@ export function AppStoreProvider({ children }) {
     personalCheckIns,
     chatMessages,
     readCounts,
+    exploreGoals,
     addGoalToGroup,
     submitCheckIn,
     addPersonalGoal,
@@ -288,6 +377,11 @@ export function AppStoreProvider({ children }) {
     markGroupRead,
     getTodaysTasks,
     getLeaderboard,
+    likeExploreGoal,
+    saveExploreGoal,
+    addExploreComment,
+    echoExploreGoal,
+    getSavedExploreGoals,
   };
 
   return (
