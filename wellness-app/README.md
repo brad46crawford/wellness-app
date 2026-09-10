@@ -1,4 +1,4 @@
-# Wellness Circle — MVP Scaffold
+# Ascera — MVP Scaffold
 
 A group goal-tracking + accountability app, built with **Expo (React Native)**
 so one codebase runs on iOS, Android, and (later) web.

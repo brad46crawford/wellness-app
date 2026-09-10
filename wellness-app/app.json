@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Wellness Circle",
-    "slug": "wellness-circle",
+    "name": "Ascera",
+    "slug": "ascera",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -26,8 +26,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Wellness Circle uses your photos to let you share proof of completing a goal with your group.",
-          "cameraPermission": "Wellness Circle uses your camera to let you snap a photo when you complete a goal."
+          "photosPermission": "Ascera uses your photos to let you share proof of completing a goal with your group.",
+          "cameraPermission": "Ascera uses your camera to let you snap a photo when you complete a goal."
         }
       ],
       "expo-font",
