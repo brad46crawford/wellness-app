@@ -199,31 +199,3 @@ export const initialExploreGoals = [
     comments: [],
   },
 ];
-
-export const initialChatMessages = {
-  g1: [
-    {
-      id: "m1",
-      userId: "u2",
-      userName: "Alex",
-      text: "Morning walk crew, who's up early tomorrow?",
-      time: "8:02 AM",
-    },
-    {
-      id: "m2",
-      userId: "u3",
-      userName: "Priya",
-      text: "Me! 6am at the usual spot",
-      time: "8:05 AM",
-    },
-  ],
-  g2: [
-    {
-      id: "m3",
-      userId: "u4",
-      userName: "Sam",
-      text: "Reminder to refill your water bottles tonight 💧",
-      time: "9:14 PM",
-    },
-  ],
-};

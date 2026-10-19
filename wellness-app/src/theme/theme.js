@@ -4,7 +4,7 @@ export const colors = {
   surface: "#1C1C1F", // steel panel / card
   surfaceLight: "#28282C", // brushed steel, inputs & tracks
   primary: "#006747", // Titan Green — solid fills (buttons, active states)
-  primaryDark: "#00432E", // pressed states / "me" chat bubble
+  primaryDark: "#00432E", // pressed states
   primaryLight: "#1F9A6C", // brighter green for small text on dark surfaces
   onPrimary: "#F5F5F5", // text/icons on top of solid Titan Green
   accent: "#006747",

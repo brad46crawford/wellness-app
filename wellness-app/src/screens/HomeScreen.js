@@ -1,18 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, TextInput, Alert } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
 import { useAppStore } from "../data/AppStore";
 import LeaderboardCard from "../components/LeaderboardCard";
 import { colors, spacing, radius, fonts } from "../theme/theme";
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
   const {
     getTodaysTasks,
     getLeaderboard,
     submitCheckIn,
     submitPersonalCheckIn,
-    sendGoalPhoto,
     groups,
     currentUser,
   } = useAppStore();
@@ -22,65 +20,9 @@ export default function HomeScreen({ navigation }) {
   const tasks = getTodaysTasks();
   const myGroups = groups.filter((g) => g.members.some((m) => m.id === currentUser.id));
 
-  function goToThread(task) {
-    navigation.navigate("Chat", {
-      screen: "ChatThread",
-      params: { groupId: task.groupId, groupName: task.groupName },
-    });
-  }
-
-  async function captureGoalPhoto(task, source) {
-    const permission =
-      source === "camera"
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permission.granted) {
-      Alert.alert(
-        "Permission needed",
-        "Enable camera/photo access in Settings to share proof pics with your group."
-      );
-      goToThread(task);
-      return;
-    }
-
-    const result =
-      source === "camera"
-        ? await ImagePicker.launchCameraAsync({
-            mediaTypes: "images",
-            quality: 0.6,
-            allowsEditing: true,
-          })
-        : await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: "images",
-            quality: 0.6,
-            allowsEditing: true,
-          });
-
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      sendGoalPhoto(task.groupId, result.assets[0].uri, task.title);
-    }
-    goToThread(task);
-  }
-
-  function promptGoalPhoto(task) {
-    Alert.alert(
-      "Nice work! 💪",
-      `Share a photo of you crushing "${task.title}" with ${task.groupName}?`,
-      [
-        { text: "Take Photo", onPress: () => captureGoalPhoto(task, "camera") },
-        { text: "Choose from Library", onPress: () => captureGoalPhoto(task, "library") },
-        { text: "Skip", style: "cancel", onPress: () => goToThread(task) },
-      ]
-    );
-  }
-
   function handleCheckIn(task, status) {
     if (task.kind === "group") {
-      submitCheckIn(task.goalId, task.groupId, task.groupName, task.title, note.trim(), status);
-      if (status === "done") {
-        promptGoalPhoto(task);
-      }
+      submitCheckIn(task.goalId, task.groupId, note.trim(), status);
     } else {
       submitPersonalCheckIn(task.goalId, note.trim(), status);
     }

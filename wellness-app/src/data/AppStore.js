@@ -4,7 +4,6 @@ import {
   initialCheckIns,
   initialPersonalGoals,
   initialPersonalCheckIns,
-  initialChatMessages,
   initialExploreGoals,
   currentUser,
 } from "./mockData";
@@ -37,28 +36,9 @@ export function AppStoreProvider({ children }) {
   const [checkIns, setCheckIns] = useState(initialCheckIns);
   const [personalGoals, setPersonalGoals] = useState(initialPersonalGoals);
   const [personalCheckIns, setPersonalCheckIns] = useState(initialPersonalCheckIns);
-  const [chatMessages, setChatMessages] = useState(initialChatMessages);
-  // Tracks how many messages in each group the user has actually seen,
-  // so the chat list can show an unread badge for the rest.
-  const [readCounts, setReadCounts] = useState({});
   // The public Explore feed — mock "other user" posts for now. Local/
   // mock only: nothing here syncs across devices yet.
   const [exploreGoals, setExploreGoals] = useState(initialExploreGoals);
-
-  // Appends a message to a group's thread and marks it read for the
-  // sender (everything here is authored by the current user for now).
-  function pushMessage(groupId, message) {
-    const newMessage = {
-      id: `m_${Date.now()}_${Math.round(Math.random() * 1000)}`,
-      time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-      ...message,
-    };
-    setChatMessages((prev) => {
-      const updated = { ...prev, [groupId]: [...(prev[groupId] || []), newMessage] };
-      setReadCounts((prevRead) => ({ ...prevRead, [groupId]: updated[groupId].length }));
-      return updated;
-    });
-  }
 
   function addGoalToGroup(groupId, title, targetPerWeek, sharedToExplore = false) {
     setGroups((prev) =>
@@ -83,7 +63,7 @@ export function AppStoreProvider({ children }) {
     );
   }
 
-  function submitCheckIn(goalId, groupId, groupName, goalTitle, note, status) {
+  function submitCheckIn(goalId, groupId, note, status) {
     const newCheckIn = {
       id: `c_${Date.now()}`,
       goalId,
@@ -119,29 +99,6 @@ export function AppStoreProvider({ children }) {
       );
     }
 
-    // Post the check-in into the group's chat thread so accountability
-    // shows up where the group is already spending time.
-    pushMessage(groupId, {
-      type: "system",
-      status,
-      userName: currentUser.name,
-      text:
-        status === "done"
-          ? `${currentUser.name} checked in: ${goalTitle} ✅`
-          : `${currentUser.name} missed today's goal: ${goalTitle} (no shame, tomorrow's a reset)`,
-    });
-  }
-
-  // Posts the proof-of-completion photo a user takes right after
-  // checking off a group goal.
-  function sendGoalPhoto(groupId, imageUri, goalTitle) {
-    pushMessage(groupId, {
-      type: "photo",
-      userId: currentUser.id,
-      userName: currentUser.name,
-      imageUri,
-      caption: goalTitle ? `Proof: ${goalTitle}` : null,
-    });
   }
 
   function addPersonalGoal(title, targetPerWeek, sharedToExplore = false) {
@@ -182,23 +139,6 @@ export function AppStoreProvider({ children }) {
         )
       );
     }
-  }
-
-  function sendMessage(groupId, text) {
-    pushMessage(groupId, {
-      type: "text",
-      userId: currentUser.id,
-      userName: currentUser.name,
-      text,
-    });
-  }
-
-  // Call when a thread is opened so its unread badge clears.
-  function markGroupRead(groupId) {
-    setReadCounts((prev) => ({
-      ...prev,
-      [groupId]: (chatMessages[groupId] || []).length,
-    }));
   }
 
   // Ranks a group's members by completed check-ins this week. Members
@@ -355,16 +295,11 @@ export function AppStoreProvider({ children }) {
     checkIns,
     personalGoals,
     personalCheckIns,
-    chatMessages,
-    readCounts,
     exploreGoals,
     addGoalToGroup,
     submitCheckIn,
     addPersonalGoal,
     submitPersonalCheckIn,
-    sendMessage,
-    sendGoalPhoto,
-    markGroupRead,
     getTodaysTasks,
     getLeaderboard,
     likeExploreGoal,

@@ -32,14 +32,13 @@ on your phone instantly — that's the whole dev loop.
 
 | Tab | What it does | File |
 |---|---|---|
-| **Home** | Shows today's outstanding tasks across every group and personal goal — tap one to check in Done/Missed right there. A recent-activity strip underneath shows what your circles are up to. | `src/screens/HomeScreen.js` |
-| **Chat** | One message thread per group. Beta-level on purpose — plain text, no moderation yet (that's a Phase 2 item, see below). | `src/screens/ChatScreen.js` |
-| **Goals** | Shows each group and its shared goals with weekly progress bars. Tap "+ Add a group goal" to create one. | `src/screens/GoalsScreen.js` |
-| **Personal** | Private goals only you can see, plus a preferences section (notification toggle for now). | `src/screens/PersonalScreen.js` |
+| **Home** | Shows today's outstanding tasks across every group and personal goal — tap one to check in Done/Missed right there. A weekly leaderboard for each of your groups sits on top. | `src/screens/HomeScreen.js` |
+| **Goals** | Shows each group and its shared goals with weekly progress bars, plus your personal goals. Tap "+ Add a group goal" to create one. | `src/screens/GoalsScreen.js` |
+| **Explore** | A public feed of goals other people are working on — like, comment, or save one for later and add it to your own goals. | `src/screens/ExploreScreen.js` |
 
-All four tabs share one data store (`src/data/AppStore.js`), so a check-in
-on Home immediately updates the progress bar on Goals and posts to the
-feed. That wiring is the hard part of the "bones" — it's done.
+All three tabs share one data store (`src/data/AppStore.js`), so a check-in
+on Home immediately updates the progress bar on Goals and the leaderboard.
+That wiring is the hard part of the "bones" — it's done.
 
 ---
 
@@ -64,13 +63,11 @@ write and run code with you) and work through this roughly in order:
 - Check-in submissions write to the `checkins` table instead of local state.
 - Add a simple daily reminder notification (Expo has a built-in
   notifications API) — this is what actually drives "accountability."
-- Wire Chat to Supabase real-time so messages sync across devices/users
-  (currently chat is local-only mock data, fine for demoing solo).
 
-**Before any public launch — Chat moderation**
-- The current chat is intentionally bare-bones for the competition demo.
-  Before real strangers can join groups, add: a report/block button per
-  message, basic profanity/spam filtering, and a way for a group creator
+**Before any public launch — Explore moderation**
+- Explore comments are intentionally bare-bones for the competition demo.
+  Before real strangers can post, add: a report/block button per post and
+  comment, basic profanity/spam filtering, and a way for a group creator
   to remove a member. Don't skip this step for a public release.
 
 **Days 9–10 — Real Feed + invites**
@@ -103,15 +100,18 @@ wellness-app/
 ├── App.js                     # Entry point
 ├── src/
 │   ├── data/
-│   │   ├── mockData.js        # Sample groups/goals/checkins — swap for Supabase in Phase 2
+│   │   ├── mockData.js        # Sample groups/goals/checkins/Explore posts — swap for Supabase in Phase 2
 │   │   └── AppStore.js        # Shared state all screens read/write from
-│   ├── navigation/index.js    # Bottom tab bar (Goals / Check In / Feed)
+│   ├── navigation/index.js    # Bottom tab bar (Home / Goals / Explore)
 │   ├── screens/
+│   │   ├── HomeScreen.js
 │   │   ├── GoalsScreen.js
-│   │   ├── CheckInScreen.js
-│   │   └── FeedScreen.js
+│   │   └── ExploreScreen.js
 │   ├── components/
+│   │   ├── AnimatedSplash.js
+│   │   ├── ExploreCard.js
 │   │   ├── GoalCard.js
+│   │   ├── LeaderboardCard.js
 │   │   └── ProgressBar.js
 │   └── theme/theme.js         # Colors/spacing — change here to reskin the whole app
 ```
